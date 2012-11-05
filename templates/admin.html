@@ -1,0 +1,104 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title>Admin</title>
+	<script type='text/javascript'>
+		var admin;
+		var currentPage = 0;
+		function init()
+		{
+			admin = new WebSocket('ws://ec2-54-242-8-110.compute-1.amazonaws.com:8080/websocket/client/connect');
+			admin.onopen = function () {
+				display_message('Connected! Click on a button to change page to:');
+				connect(admin, 'admin', '1234');
+			};
+			admin.onmessage = function (event) {
+				display_message('received message');
+
+				var p = JSON.parse(event.data);
+				if (p['msgType'] == 'info') {
+					var msg = p['msgPayLoad'];
+					var div = document.createElement('div');
+					div.innerHTML = msg;
+
+					var clientDiv = document.getElementById('clients');
+					clientDiv.appendChild(div);
+				}
+			};
+			admin.onclose = function () {
+				display_message('Lost connection!');
+			};
+			admin.onerror = function () {
+				display_message('Error!');
+			};
+		}
+		function connect(socket, clientType, uuid)
+		{
+			var p = {
+				deviceID: uuid,
+				clientType: clientType,
+				type: 'connect',
+			};
+			var json_string = JSON.stringify(p);
+			socket.send(json_string);
+		}
+		function disconnect(socket, clientType)
+		{
+			
+		}
+		function changePage(page)
+		{
+			var p = {
+				type: "changePage",
+				from: currentPage,
+				to:page,
+			};
+			var json_string = JSON.stringify(p);
+
+			admin.send(json_string);
+		}
+		function display_message(message)
+		{
+			var msg_div = document.getElementById('msg');
+				if(msg_div)
+					msg_div.innerHTML = message
+		}
+		function generate_uuid()
+		{
+			return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+			    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+			    return v.toString(16);
+			});
+		}
+		function addClient()
+		{
+			var client = new WebSocket('ws://ec2-54-242-8-110.compute-1.amazonaws.com:8080/websocket/client/connect');
+			client.onopen = function () {
+				connect(client, 'student', generate_uuid());
+			};
+			client.onmessage = function (event) {
+
+				alert('Received data: ' + JSON.parse(event.data));
+			};
+		}
+	</script>
+</head>
+<body onload="init();">
+	<div id='msg'></div>
+	<div>
+		<button id='1' onclick='changePage(1);' >1</button>
+		<button id='2' onclick='changePage(2);' >2</button>
+		<button id='3' onclick='changePage(3);' >3</button>
+		<button id='4' onclick='changePage(4);' >4</button>
+		<button id='5' onclick='changePage(5);' >5</button>
+		<button id='6' onclick='changePage(6);' >6</button>
+	</div>
+	<div>
+		<button onclick='addClient();'>add client</button>
+	</div>
+	<div>client list:</div>
+	<div id='clients'>
+	</div>
+</body>
+</html>

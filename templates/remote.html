@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title>Remote Control</title>
+	<script type="text/javascript">
+		function ajax(method, src, args, callback) 
+		{
+		    var req = new XMLHttpRequest();
+		    req.onreadystatechange = function() {
+		        if (this.readyState == 4) {
+		            callback(this);
+		        }
+		    }
+		    if (method.toLowerCase() == "get") {
+		        req.open("get", src + "?" + args, true);
+		        req.send(null);
+		    }
+		    if (method.toLowerCase() == "post") {
+		        req.open("post", src, true);
+		        req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+		        req.send(args);
+		    }
+		}
+	</script>
+	<script type='text/javascript'>
+		function changePage(page)
+		{
+			var callback = function(req)
+		    {
+		        // display the result
+		        var result = eval('(' + req.responseText + ')');
+		        
+		        var div = document.getElementById('msg');
+		        var msg = result['msg'];
+		        div.innerHTML = msg;
+
+		        var toBtn = document.getElementById(result['to']);
+		        toBtn.style.color = "Red";
+
+		        var fromBtn = document.getElementById(result['from']);
+		        fromBtn.style.color = "Black";
+		    }
+
+			var src = "/api/change";
+		    var args = "page=" + page;
+		    ajax('post', src, args, callback);
+		}
+	</script>
+	<script type='text/javascript'>
+		function init()
+		{
+
+		}
+	</script>
+</head>
+<body onload="init();">
+	<div id='msg'>Click on a button to change page to:</div>
+	<div>
+		<button id='1' onclick='changePage(1);' >1</button>
+		<button id='2' onclick='changePage(2);' >2</button>
+		<button id='3' onclick='changePage(3);' >3</button>
+		<button id='4' onclick='changePage(4);' >4</button>
+		<button id='5' onclick='changePage(5);' >5</button>
+		<button id='6' onclick='changePage(6);' >6</button>
+	</div>
+</body>
+</html>

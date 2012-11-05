@@ -1,0 +1,197 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<style type="text/css">
+	.sectionDiv{
+		margin-bottom: 20px;
+		border-style: solid;
+		border-width: 2px;
+	}
+	</style>
+	<script type="text/javascript">
+		function generate_uuid(){
+			return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+			    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+			    return v.toString(16);
+			});
+		}
+	</script>
+	<script type='text/javascript'>
+		function login(socket, clientType, clientId)
+		{
+			var p = {
+				type: 'login',
+				detail: {
+					id: clientId,
+					type: clientType,
+				},
+			};
+			var json_string = JSON.stringify(p);
+			socket.send(json_string);
+		}
+	</script>
+	<script type='text/javascript'>
+		var url = 'ws://ec2-54-242-8-110.compute-1.amazonaws.com:8080/ws/connect'
+		var admin, teacher, students;
+		function configAdminClient()
+		{
+			var log = function(msg) {
+				var div = document.getElementById('adminLogDiv');
+				if(div) {
+					var entry = document.createElement('div');
+					entry.innerHTML = msg;
+					div.appendChild(entry);
+				}
+			};
+
+			admin = new WebSocket(url);
+			admin.onopen = function(){
+				log('connected!');
+				var uuid = generate_uuid();
+				login(admin, 'admin', uuid);
+			};
+			admin.onmessage = function(event){
+				 log(event.data);
+			};
+			admin.onclose = function(){
+				log('disconnected!');
+
+			};
+			admin.onerror = function(){
+				log('error occured!');
+			}
+		}
+		function configTeacherClient()
+		{
+			var log = function(msg) {
+				var div = document.getElementById('teacherLogDiv');
+				if(div) {
+					var entry = document.createElement('div');
+					entry.innerHTML = msg;
+					div.appendChild(entry);
+				}
+			};
+
+			teacher = new WebSocket(url);
+			teacher.onopen = function(){
+				log('connected!');
+				var uuid = generate_uuid();
+				login(teacher, 'teacher', uuid);
+			};
+			teacher.onmessage = function(event){
+				log(event.data);
+			};
+			teacher.onclose = function(){
+				log('disconnected!');
+			};
+			teacher.onerror = function(){
+				log('error occured!');
+			}
+		}
+		function addStudentClient()
+		{
+			var log = function(msg) {
+				var div = document.getElementById('studentLogDiv');
+				if(div) {
+					var entry = document.createElement('div');
+					entry.innerHTML = msg;
+					div.appendChild(entry);
+				}
+			};
+
+			var student = new WebSocket(url);
+			student.onopen = function(){
+				log('connected!');
+				var uuid = generate_uuid();
+				login(student, 'student', uuid);
+				queryVideo(student);
+			};
+			student.onmessage = function(event){
+				log(event.data);
+			};
+			student.onclose = function(){
+				log('disconnected!');
+			};
+			student.onerror = function(){
+				log('error occured!');
+			}
+		}
+		function init()
+		{
+
+		}
+	</script>
+	<script type="text/javascript">
+		function setVideo(videoNum) {
+			videoNum = videoNum - 1;
+			if (!teacher) {
+				alert('please connect teacher first!');
+			}
+			else {
+				var p = {
+					type: 'change',
+					detail: {
+						videoId: videoNum,
+						timestamp: '00:00:00',
+						action: 'play',
+					},
+				};
+				var json_string = JSON.stringify(p);
+				teacher.send(json_string)
+			}
+		}
+		function queryVideo(socket){
+			var p = {
+				type: 'inqury',
+				detail: {},
+			};
+			var json_string = JSON.stringify(p);
+			socket.send(json_string)
+		}
+	</script>
+</head>
+<body onload="init();">
+	<div class='sectionDiv'>
+		<div>
+			<span>Admin section</span>
+			<button onclick='configAdminClient();'>connect</button>
+		</div>
+		<div id='adminLogDiv'></div>
+	</div>
+	<div class='sectionDiv'>
+		<div>
+			<span>Teacher section</span>
+			<button onclick='configTeacherClient();'>connect</button>
+			<button onclick='setVideo(1);'>video 1</button>
+			<button onclick='setVideo(2);'>video 2</button>
+			<button onclick='setVideo(3);'>video 3</button>
+			<button onclick='setVideo(4);'>video 4</button>
+		</div>
+		<div id='teacherLogDiv'></div>
+	</div>
+	<div class='sectionDiv'>
+		<div>
+			<span>students section</span>
+			<button onclick='addStudentClient();'>add</button>
+		</div>
+		<div id='studentLogDiv'></div>
+	</div>
+	<div id='msg'></div>
+	<div>
+		<button id='1' onclick='changePage(1);' >1</button>
+		<button id='2' onclick='changePage(2);' >2</button>
+		<button id='3' onclick='changePage(3);' >3</button>
+		<button id='4' onclick='changePage(4);' >4</button>
+		<button id='5' onclick='changePage(5);' >5</button>
+		<button id='6' onclick='changePage(6);' >6</button>
+	</div>
+	<div>
+		<button onclick='addClient();'>add client</button>
+	</div>
+	<div>client list:</div>
+	<div id='clients'>
+	</div>
+</body>
+</html>
